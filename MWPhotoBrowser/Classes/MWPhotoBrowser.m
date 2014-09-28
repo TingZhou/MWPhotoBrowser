@@ -14,6 +14,8 @@
 
 #define PADDING                  10
 #define ACTION_SHEET_OLD_ACTIONS 2000
+#define IADHEIGHTIPHONE         50.0
+#define IADHEIGHTIPAD           66.0
 
 @implementation MWPhotoBrowser
 
@@ -98,6 +100,9 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
     [self releaseAllUnderlyingPhotos:NO];
     [[SDImageCache sharedImageCache] clearMemory]; // clear memory
+    
+    NSLog(@"Free ad");
+    self.iaBanner.delegate = nil;
 }
 
 - (void)releaseAllUnderlyingPhotos:(BOOL)preserveCurrent {
@@ -201,6 +206,50 @@
 	// Super
     [super viewDidLoad];
 	
+    //Initialize the banner off the screen so that it animates up when displaying
+    self.iaBanner = [[ADBannerView alloc] initWithFrame:[self frameForADAtOrientation:self.interfaceOrientation]];
+    self.iaBanner.currentContentSizeIdentifier = ADBannerContentSizeIdentifierPortrait;
+    self.iaBanner.delegate = self;
+    [self.view addSubview:self.iaBanner];
+}
+
+- (void)bannerViewDidLoadAd:(ADBannerView *)banner
+{
+    NSLog(@"iad: Received ad");
+}
+
+- (void)bannerView:(ADBannerView *)banner didFailToReceiveAdWithError:(NSError *)error
+{
+    NSLog(@"iad: Failed to receive ad with error: %@", [error localizedFailureReason]);
+}
+
+- (BOOL)bannerViewActionShouldBegin:(ADBannerView *)banner willLeaveApplication:(BOOL)willLeave
+{
+    NSLog(@"iad: Click");
+    
+    return YES;
+}
+
+- (void)bannerViewActionDidFinish:(ADBannerView *)banner
+{
+}
+
+- (CGRect)frameForADAtOrientation:(UIInterfaceOrientation)orientation {
+    NSLog(@"loadAd %f %f %f %f", self.view.bounds.size.width, self.view.bounds.size.height, IADHEIGHTIPHONE, IADHEIGHTIPAD);
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+        
+        return CGRectMake(0.0,
+                          self.view.frame.size.height - IADHEIGHTIPHONE,
+                          self.view.frame.size.width,
+                          IADHEIGHTIPHONE);
+    } else {
+        
+        return CGRectMake(0.0,
+                          self.view.frame.size.height - IADHEIGHTIPAD,
+                          self.view.frame.size.width,
+                          IADHEIGHTIPAD);
+    }
 }
 
 - (void)performLayout {
@@ -502,6 +551,7 @@
 - (void)viewWillLayoutSubviews {
     [super viewWillLayoutSubviews];
     [self layoutVisiblePages];
+    self.iaBanner.frame = [self frameForADAtOrientation:self.interfaceOrientation];
 }
 
 - (void)layoutVisiblePages {
@@ -957,8 +1007,13 @@
 
 - (CGRect)frameForPagingScrollView {
     CGRect frame = self.view.bounds;// [[UIScreen mainScreen] bounds];
-    frame.origin.x -= PADDING;
-    frame.size.width += (2 * PADDING);
+    //frame.origin.x -= PADDING;
+    //frame.size.width += (2 * PADDING);
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+        frame.size.height -= IADHEIGHTIPHONE;
+    } else {
+        frame.size.height -= IADHEIGHTIPAD;
+    }
     return CGRectIntegral(frame);
 }
 
@@ -990,7 +1045,15 @@
     CGFloat height = 44;
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone &&
         UIInterfaceOrientationIsLandscape(orientation)) height = 32;
-	return CGRectIntegral(CGRectMake(0, self.view.bounds.size.height - height, self.view.bounds.size.width, height));
+    
+    if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPhone) {
+        return CGRectMake(0, self.view.bounds.size.height - height - IADHEIGHTIPHONE,
+                          self.view.bounds.size.width, height);
+    } else {
+        return CGRectMake(0, self.view.bounds.size.height - height - IADHEIGHTIPAD,
+                          self.view.bounds.size.width, height);
+    }
+	//return CGRectIntegral(CGRectMake(0, self.view.bounds.size.height - height, self.view.bounds.size.width, height));
 }
 
 - (CGRect)frameForCaptionView:(MWCaptionView *)captionView atIndex:(NSUInteger)index {
