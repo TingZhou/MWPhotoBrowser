@@ -208,6 +208,7 @@
 
 - (CGFloat)initialZoomScaleWithMinScale {
     CGFloat zoomScale = self.minimumZoomScale;
+    /*
     if (_photoImageView && _photoBrowser.zoomPhotosToFill) {
         // Zoom image to fill if the aspect ratios are fairly similar
         CGSize boundsSize = self.bounds.size;
@@ -223,6 +224,7 @@
             zoomScale = MIN(MAX(self.minimumZoomScale, zoomScale), self.maximumZoomScale);
         }
     }
+     */
     return zoomScale;
 }
 
@@ -249,10 +251,16 @@
     CGFloat minScale = MIN(xScale, yScale);                 // use minimum of these to allow the image to become fully visible
 
     // Calculate Max
-	CGFloat maxScale = 3;
+	//CGFloat maxScale = 3;
+    CGFloat maxScale = 1;
     if (UI_USER_INTERFACE_IDIOM() == UIUserInterfaceIdiomPad) {
         // Let them go a bit bigger on a bigger screen!
-        maxScale = 4;
+        //maxScale = 4;
+        maxScale = 1;
+    }
+    
+    if (MAX(xScale, yScale) > maxScale) {
+        maxScale = MAX(xScale, yScale);
     }
     
     // Image is smaller than screen so no zooming!
@@ -366,7 +374,8 @@
 	} else {
 		
 		// Zoom in to twice the size
-        CGFloat newZoomScale = ((self.maximumZoomScale + self.minimumZoomScale) / 2);
+        //CGFloat newZoomScale = ((self.maximumZoomScale + self.minimumZoomScale) / 2);
+        CGFloat newZoomScale = self.zoomScale * 2.0;
         CGFloat xsize = self.bounds.size.width / newZoomScale;
         CGFloat ysize = self.bounds.size.height / newZoomScale;
         [self zoomToRect:CGRectMake(touchPoint.x - xsize/2, touchPoint.y - ysize/2, xsize, ysize) animated:YES];
