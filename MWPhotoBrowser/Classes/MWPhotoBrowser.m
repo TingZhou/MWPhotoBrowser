@@ -12,6 +12,10 @@
 #import "MWPhotoBrowserPrivate.h"
 #import "SDImageCache.h"
 
+#import "GAI.h"
+#import "GAIDictionaryBuilder.h"
+#import "GAIFields.h"
+
 #define PADDING                  10
 #define ACTION_SHEET_OLD_ACTIONS 2000
 #define IADHEIGHTIPHONE         50.0
@@ -216,16 +220,28 @@
 - (void)bannerViewDidLoadAd:(ADBannerView *)banner
 {
     NSLog(@"iad: Received ad");
+    
+    id tracker = [[GAI sharedInstance] defaultTracker];
+    [tracker set:kGAIScreenName value:@"_iad"];
+    [tracker send:[[GAIDictionaryBuilder createScreenView] build]];
 }
 
 - (void)bannerView:(ADBannerView *)banner didFailToReceiveAdWithError:(NSError *)error
 {
     NSLog(@"iad: Failed to receive ad with error: %@", [error localizedFailureReason]);
+    
+    id tracker = [[GAI sharedInstance] defaultTracker];
+    [tracker set:kGAIScreenName value:@"_fail"];
+    [tracker send:[[GAIDictionaryBuilder createScreenView] build]];
 }
 
 - (BOOL)bannerViewActionShouldBegin:(ADBannerView *)banner willLeaveApplication:(BOOL)willLeave
 {
     NSLog(@"iad: Click");
+    
+    id tracker = [[GAI sharedInstance] defaultTracker];
+    [tracker set:kGAIScreenName value:@"_click"];
+    [tracker send:[[GAIDictionaryBuilder createScreenView] build]];
     
     return YES;
 }
